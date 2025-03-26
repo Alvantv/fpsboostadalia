@@ -1,183 +1,181 @@
--- MADE BY RIP#6666
--- MODIFIED TO PRESERVE TREE TEXTURES
--- send issues or suggestions to my discord: discord.gg/rips
+-- Roblox FPS Booster + Dark Environment Script
+-- By DeepSeek (optimized for performance & atmosphere)
+-- Modified with Kemiling Hub loading screen
 
-if not _G.Ignore then
-    _G.Ignore = {
-        workspace.Terrain,
-        workspace:FindFirstChild("Trees"),
-        workspace:FindFirstChild("Forest")
-        -- Add other tree containers here
-    }
-end
+local decalsyeeted = true -- Remove decals for better FPS
+local darkmode = true -- Enable darker environment
 
-if not _G.WaitPerAmount then
-    _G.WaitPerAmount = 500
-end
-if _G.SendNotifications == nil then
-    _G.SendNotifications = false
-end
-if _G.ConsoleLogs == nil then
-    _G.ConsoleLogs = false
-end
+-- Create loading screen
+local function createLoadingScreen()
+    local player = game:GetService("Players").LocalPlayer
+    local gui = Instance.new("ScreenGui")
+    gui.Name = "KemilingHubLoading"
+    gui.IgnoreGuiInset = true
+    gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    gui.Parent = player:WaitForChild("PlayerGui")
 
-if not game:IsLoaded() then
-    repeat
-        task.wait()
-    until game:IsLoaded()
-end
+    -- Background
+    local frame = Instance.new("Frame")
+    frame.Size = UDim2.new(1, 0, 1, 0)
+    frame.BackgroundColor3 = Color3.fromRGB(15, 15, 20)
+    frame.BorderSizePixel = 0
+    frame.Parent = gui
 
-if not _G.Settings then
-    _G.Settings = {
-        Players = {
-            ["Ignore Me"] = true,
-            ["Ignore Others"] = true,
-            ["Ignore Tools"] = true
-        },
-        Meshes = {
-            NoMesh = false,      -- Keep this false for trees
-            NoTexture = false,   -- Keep this false for trees
-            Destroy = false
-        },
-        Images = {
-            Invisible = true,
-            Destroy = false
-        },
-        Explosions = {
-            Smaller = true,
-            Invisible = false,
-            Destroy = false
-        },
-        Particles = {
-            Invisible = true,
-            Destroy = false
-        },
-        TextLabels = {
-            LowerQuality = false,
-            Invisible = false,
-            Destroy = false
-        },
-        MeshParts = {
-            LowerQuality = true,
-            Invisible = false,
-            NoTexture = false,   -- Keep this false for trees
-            NoMesh = false,      -- Keep this false for trees
-            Destroy = false
-        },
-        Other = {
-            ["FPS Cap"] = 240,
-            ["No Camera Effects"] = true,
-            ["No Clothes"] = true,
-            ["Low Water Graphics"] = true,
-            ["No Shadows"] = true,
-            ["Low Rendering"] = true,
-            ["Low Quality Parts"] = true,
-            ["Low Quality Models"] = true,
-            ["Reset Materials"] = true,
-            ["Lower Quality MeshParts"] = true
-        }
-    }
-end
+    -- Container
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(0.6, 0, 0.2, 0)
+    container.Position = UDim2.new(0.2, 0, 0.4, 0)
+    container.BackgroundTransparency = 1
+    container.Parent = frame
 
-local Players, Lighting, StarterGui, MaterialService = game:GetService("Players"), game:GetService("Lighting"), game:GetService("StarterGui"), game:GetService("MaterialService")
-local ME, CanBeEnabled = Players.LocalPlayer, {"ParticleEmitter", "Trail", "Smoke", "Fire", "Sparkles"}
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Size = UDim2.new(1, 0, 0.5, 0)
+    title.Position = UDim2.new(0, 0, 0, 0)
+    title.BackgroundTransparency = 1
+    title.Text = "KEMILING HUB"
+    title.TextColor3 = Color3.fromRGB(0, 255, 255)
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 28
+    title.TextStrokeTransparency = 0.8
+    title.Parent = container
 
-local function IsTree(Instance)
-    return Instance:IsA("MeshPart") and (Instance.Name:lower():find("tree") or Instance.Name:lower():find("leaf") or Instance.Name:lower():find("trunk"))
-        or Instance:IsA("Part") and (Instance.Name:lower():find("tree") or Instance.Name:lower():find("leaf") or Instance.Name:lower():find("trunk"))
-        or Instance:IsA("Model") and (Instance.Name:lower():find("tree") or Instance.Name:lower():find("forest"))
-end
+    -- Subtitle
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Size = UDim2.new(1, 0, 0.5, 0)
+    subtitle.Position = UDim2.new(0, 0, 0.5, 0)
+    subtitle.BackgroundTransparency = 1
+    subtitle.Text = "PREMIUM FPS BOOST"
+    subtitle.TextColor3 = Color3.fromRGB(200, 200, 255)
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.TextSize = 18
+    subtitle.Parent = container
 
-local function PartOfCharacter(Instance)
-    for i, v in pairs(Players:GetPlayers()) do
-        if v ~= ME and v.Character and Instance:IsDescendantOf(v.Character) then
-            return true
-        end
-    end
-    return false
-end
+    -- Progress bar background
+    local progressBg = Instance.new("Frame")
+    progressBg.Size = UDim2.new(1, 0, 0.1, 0)
+    progressBg.Position = UDim2.new(0, 0, 0.9, 0)
+    progressBg.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    progressBg.BorderSizePixel = 0
+    progressBg.Parent = container
 
-local function DescendantOfIgnore(Instance)
-    for i, v in pairs(_G.Ignore) do
-        if Instance:IsDescendantOf(v) then
-            return true
-        end
-    end
-    return false
-end
+    -- Progress bar fill
+    local progressFill = Instance.new("Frame")
+    progressFill.Size = UDim2.new(0, 0, 1, 0)
+    progressFill.BackgroundColor3 = Color3.fromRGB(0, 200, 255)
+    progressFill.BorderSizePixel = 0
+    progressFill.Parent = progressBg
 
-local function CheckIfBad(Instance)
-    -- Skip processing for trees and their parts
-    if IsTree(Instance) then
-        return
-    end
+    -- Percentage text
+    local percentText = Instance.new("TextLabel")
+    percentText.Size = UDim2.new(1, 0, 1, 0)
+    percentText.BackgroundTransparency = 1
+    percentText.Text = "0%"
+    percentText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    percentText.Font = Enum.Font.Gotham
+    percentText.TextSize = 14
+    percentText.Parent = progressBg
 
-    if not Instance:IsDescendantOf(Players) and 
-       (_G.Settings.Players["Ignore Others"] and not PartOfCharacter(Instance) or not _G.Settings.Players["Ignore Others"]) and 
-       (_G.Settings.Players["Ignore Me"] and ME.Character and not Instance:IsDescendantOf(ME.Character) or not _G.Settings.Players["Ignore Me"]) and 
-       (_G.Settings.Players["Ignore Tools"] and not Instance:IsA("BackpackItem") and not Instance:FindFirstAncestorWhichIsA("BackpackItem") or not _G.Settings.Players["Ignore Tools"]) and
-       (_G.Ignore and not table.find(_G.Ignore, Instance) and not DescendantOfIgnore(Instance) or (not _G.Ignore or type(_G.Ignore) ~= "table" or #_G.Ignore <= 0)) then
+    -- Animate loading
+    local duration = 6 -- seconds
+    local startTime = tick()
+    
+    local connection
+    connection = game:GetService("RunService").Heartbeat:Connect(function()
+        local elapsed = tick() - startTime
+        local progress = math.min(elapsed / duration, 1)
         
-        if Instance:IsA("DataModelMesh") then
-            if _G.Settings.Meshes.NoMesh and Instance:IsA("SpecialMesh") then
-                Instance.MeshId = ""
-            end
-            if _G.Settings.Meshes.NoTexture and Instance:IsA("SpecialMesh") then
-                Instance.TextureId = ""
-            end
-            if _G.Settings.Meshes.Destroy then
-                Instance:Destroy()
-            end
-        elseif Instance:IsA("FaceInstance") then
-            if _G.Settings.Images.Invisible then
-                Instance.Transparency = 1
-                Instance.Shiny = 1
-            end
-            if _G.Settings.Images.Destroy then
-                Instance:Destroy()
-            end
-        -- [Rest of the original CheckIfBad function remains the same...]
+        progressFill.Size = UDim2.new(progress, 0, 1, 0)
+        percentText.Text = math.floor(progress * 100) .. "%"
+        
+        if progress >= 1 then
+            connection:Disconnect()
+            gui:Destroy()
         end
+    end)
+end
+
+-- Call loading screen first
+createLoadingScreen()
+
+-- Wait for loading to complete before applying optimizations
+wait(6)
+
+-- Services
+local g = game
+local w = g.Workspace
+local l = g:GetService("Lighting")
+local t = w.Terrain
+
+-- ===== FPS OPTIMIZATION =====
+sethiddenproperty(l, "Technology", 2) -- Shadow map
+sethiddenproperty(t, "Decoration", false)
+
+-- Terrain optimization
+t.WaterWaveSize = 0
+t.WaterWaveSpeed = 0
+t.WaterReflectance = 0
+t.WaterTransparency = 0
+
+-- Lighting optimization
+l.GlobalShadows = false
+l.FogEnd = 9e9
+settings().Rendering.QualityLevel = "Level01"
+
+-- ===== DARK ENVIRONMENT SETTINGS =====
+if darkmode then
+    l.ClockTime = 15 -- Evening time (18 = 6PM)
+    l.Brightness = 0.3 -- Lower = darker
+    l.Ambient = Color3.new(0.2, 0.2, 0.2) -- Dark ambient light
+    l.OutdoorAmbient = Color3.new(0.3, 0.3, 0.3)
+    l.FogColor = Color3.new(0.1, 0.1, 0.1)
+    l.FogEnd = 500 -- Shorter view distance
+    l.ExposureCompensation = -0.5 -- Makes everything darker
+end
+
+-- ===== OBJECT OPTIMIZATION =====
+local function optimize(v)
+    if v:IsA("BasePart") and not v:IsA("MeshPart") then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+    elseif (v:IsA("Decal") or v:IsA("Texture")) and decalsyeeted then
+        v.Transparency = 1
+    elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
+        v.Lifetime = NumberRange.new(0)
+    elseif v:IsA("Explosion") then
+        v.BlastPressure = 1
+        v.BlastRadius = 1
+    elseif v:IsA("Fire") or v:IsA("SpotLight") or v:IsA("Smoke") or v:IsA("Sparkles") then
+        v.Enabled = false
+    elseif v:IsA("MeshPart") then
+        v.Material = "Plastic"
+        v.Reflectance = 0
+        -- Texture remains for hair/clothes
+    elseif v:IsA("SpecialMesh") then
+        -- Texture remains for hair/clothes
+    elseif v:IsA("ShirtGraphic") and decalsyeeted then
+        v.Graphic = 0
+    elseif (v:IsA("Shirt") or v:IsA("Pants")) and decalsyeeted then
+        v[v.ClassName.."Template"] = 0
     end
 end
 
--- [Rest of the original script remains the same...]
+-- Optimize existing objects
+for _, v in pairs(w:GetDescendants()) do
+    optimize(v)
+end
 
--- Initialize the script
-coroutine.wrap(pcall)(function()
-    -- Water graphics settings
-    if (_G.Settings["Low Water Graphics"] or (_G.Settings.Other and _G.Settings.Other["Low Water Graphics"])) then
-        if not workspace:FindFirstChildOfClass("Terrain") then
-            repeat task.wait() until workspace:FindFirstChildOfClass("Terrain")
-        end
-        workspace:FindFirstChildOfClass("Terrain").WaterWaveSize = 0
-        workspace:FindFirstChildOfClass("Terrain").WaterWaveSpeed = 0
-        workspace:FindFirstChildOfClass("Terrain").WaterReflectance = 0
-        workspace:FindFirstChildOfClass("Terrain").WaterTransparency = 0
-        if sethiddenproperty then
-            sethiddenproperty(workspace:FindFirstChildOfClass("Terrain"), "Decoration", false)
-        end
-    end
+-- Optimize new objects
+w.DescendantAdded:Connect(function(v)
+    task.wait() -- Prevent errors
+    optimize(v)
 end)
 
--- [All other original configuration coroutines remain the same...]
-
--- Process existing instances
-game.DescendantAdded:Connect(function(value)
-    wait(_G.LoadedWait or 1)
-    CheckIfBad(value)
-end)
-
-local Descendants = game:GetDescendants()
-local StartNumber = _G.WaitPerAmount or 500
-local WaitNumber = _G.WaitPerAmount or 500
-
-for i, v in pairs(Descendants) do
-    CheckIfBad(v)
-    if i == WaitNumber then
-        task.wait()
-        WaitNumber = WaitNumber + StartNumber
+-- Optimize lighting effects
+for _, v in pairs(l:GetChildren()) do
+    if v:IsA("PostEffect") then
+        v.Enabled = false
     end
 end
 
-warn("FPS Booster Loaded (Tree Textures Preserved)!")
+print("FPS Boost + Dark Mode Activated!")
